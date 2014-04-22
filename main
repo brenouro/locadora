@@ -1,0 +1,357 @@
+/***************************************************************************************************
+* Projeto locadora
+* Nome do arquivo: PROGRAMA LOCADORA.c
+* Descricao: Programa desenvolvido para uma video locadora de filmes em midias digitais           */
+/************************************* LISTA DE BIBLIOTECAS ***************************************/
+#include<stdlib.h>
+#include<stdio.h>
+#include<string.h>
+#include<conio.h>
+
+#define ESC 27
+#define F1 0x59
+#define F9 67
+/************************************* PROTOTIPOS E ESTRUTURAS *************************************/
+typedef struct C_filmes{
+    char genero[100],nome[100];
+    int codigo;
+    }cad_f;
+typedef struct C_clientes{
+    char nome [100],endereco[100],bairro[100];
+    int cpf,telefone;
+    }cad_c;
+void titulo( char *titulo);
+void menu_P (void);
+char menu_Op (char a);
+char c_clientes ();
+char c_filmes();
+int busca_c();
+int busca_f();
+int v_cpf(int *a);
+int g_codigo(int *a);
+int v_dados_f();
+void sub_menu ();
+/************************************** FUNÇÃO PRINCIPAL ********************************************/
+int main(){
+    char op;
+    menu_P();
+    menu_Op(op);
+}
+/************************************** FUNÇÕES ********************************************/
+void titulo( char *titulo){
+    system("cls");
+    printf("\t\t\t\t%s\n\n\n",titulo);
+}
+void sub_menu (){
+    printf("\t[ESC] - Voltar | [F1] - Pesquisar | [F2] - Alterar | [F9] - Finalizar\n\n");
+}
+void menu_P (void){
+    titulo("MENU PRINCIPAL");
+    printf("\t\t\t[1] <---------> Cadastro de Clientes\n");
+    printf("\t\t\t[2] <---------> Buscar Cliente\n");
+    printf("\t\t\t[3] <---------> Cadastro de Filmes\n");
+    printf("\t\t\t[4] <---------> Buscar Filmes\n");
+    printf("\t\t\t[5] <---------> Caixa\n");
+    printf("\t\t\t[0] <---------> Encerrar\n");
+    printf("\n\t\t\tEscolha a opera\x87\xC6o: ");
+}
+char menu_Op (char a){
+    a=getche();
+
+    switch(a){
+        case '1' :c_clientes();break;
+        case '2' :busca_c();break;
+        case '3' :c_filmes();break;
+        case '4' :busca_f();break;
+        case '5' :break;
+        case '0' :break;
+        default : printf("\n\n\t\t\tOp\x87\xC6o Inv\xA0lida!\n\n");getch();return main();
+    }
+
+}
+char c_clientes (){
+    char x;
+    int CPF;
+    cad_c c;
+    FILE *arq;
+    arq = fopen("dbc.dat","a+w");
+        if(arq == NULL){
+            printf("Erro 01 - Erro ao tentar abrir arquivo!!\n");
+        }
+        else{
+            do{
+                setbuf(stdin,NULL);
+
+                titulo("CADASTRO DE CLIENTE");
+                sub_menu();
+
+
+                printf("CPF: ");
+                /* ROTINA SUB_MENU
+                if(getche()==ESC){
+                    fclose(arq);
+                    return main ();
+                }*/
+
+                switch(getch()){
+                    case ESC : fclose(arq);return main();break;
+                    case F1  : fclose(arq);return busca_c();break;
+                    case F9  : fclose(arq);
+
+                }
+
+                scanf("%d",&CPF);
+                v_cpf(&CPF);//VERIFICA SE CPF JA ESTA CADASTRADO
+                if(CPF == -1){
+                    return main();//SE CPF JA ESTIVER CADASTRADO VAI RECEBER VALOR -1, E RETORNA AO MENU PRINCIPAL
+                    }
+                else{
+                    c.cpf=CPF;//SE CPF NAO FOR CADASTRADO CONTINUA A SER EXECUTADO RETORNANDO O VALOR DA VARIAVEL &CPF PARA A ESTRUTURA C.CPF
+                }
+                setbuf(stdin,NULL);
+                printf("\nNOME: ");
+                strupr(fgets(c.nome,100,stdin));
+                setbuf(stdin,NULL);
+                printf("\nENDERE\x80O: ");
+                strupr(fgets(c.endereco,100,stdin));
+                printf("\nBAIRRO: ");
+                strupr(fgets(c.bairro,100,stdin));
+                printf("\nTEL: ");
+                scanf("%d",&c.telefone);
+                fseek(arq, 0 , SEEK_END); //MOVE O CURSOS PARA O FINAL DO ARQUIVO
+                fwrite(&c,sizeof(c),1,arq);//SALVA OS DADOS DO CLIENTE NO ARQUIVO
+
+                if(ferror(arq)) //VERIFICA SE TEM ALGUM ERRO NO ARQUIVO SALVO
+                    printf("ERRO 02 - Erro na Grava\x87\xC6o do Arquivo!\n\n");
+                else
+                    fclose(arq);
+                    printf("\nCliente Cadastrado com Sucesso!\n\n");
+                    printf("Deseja Adicionar Novo Cadastro? S/N: ");
+
+                x=getche();
+            }while(x != 'n' && x != 'N');
+                        return main();
+
+      }
+ }
+char c_filmes(){
+
+    char x;
+    int aux;
+
+    cad_f f;
+
+    FILE *arq;
+    arq = fopen("dbf.dat","a+w");
+        if(arq == NULL)
+            printf("Erro 01 - Erro ao abrir arquivo!\n\n");
+        else
+        do{
+        titulo("CADASTRO DE FILMES");
+        printf("\t\t\t\t[0]-MENU PRINCIPAL\n\n\n");
+        setbuf(stdin,NULL);
+        printf("NOME: ");
+        strupr(gets(f.nome));
+        if(!stricmp(f.nome,"0")){
+            fclose(arq);
+            return main();
+        }
+        else{
+        printf("\nGENERO: ");
+        strupr(gets(f.genero));
+        aux = v_dados_f(strlen(f.nome),strlen(f.genero));
+        if(aux == -1){
+            printf("\nDados Inv\xA0lidos, por favor insira os dados corretamente.\n");
+            getche();
+            fclose(arq);
+            return c_filmes();
+        }
+        else{
+        g_codigo(&f.codigo);
+        printf("\nCODIGO: %d",f.codigo);
+
+        fseek(arq, 0 , SEEK_END);
+        fwrite(&f,sizeof(f),1,arq);
+
+            printf("\n\nFilme Cadastrado com Sucesso.\n");
+            printf("\nDeseja Cadastrar novo Filmes? S/N:");
+            x=getche();
+        }
+    }
+
+        }while(x!='N' && x!='n');
+            fclose(arq);
+            return main();
+}
+int busca_c(){
+    char op;
+    int CPF,aux=0;
+
+    cad_c c;
+
+    FILE *arq;
+     arq = fopen("dbc.dat","r");
+     if(arq == NULL){
+        printf("Erro 01 - Erro ao abrir arquvio!\n\n");getche();
+        return main();
+     }
+
+    else{
+        titulo("BUSCA DE CLIENTES");
+        printf("CPF DO CLIENTE: ");
+        scanf("%d",&CPF);
+
+        rewind(arq);//POSICIONA CURSOR PARA INICIO DO ARQUIVO
+
+       while(fread(&c,sizeof(cad_c),1,arq) == 1){
+             if(CPF == c.cpf){
+                fseek(arq,sizeof(cad_c),SEEK_CUR);
+                printf("\nNOME: %s",c.nome);
+                printf("\nENDERE\x80O: %s",c.endereco);
+                printf("\nBAIRRO: %s",c.bairro);
+                printf("\nTEL: %d",c.telefone);
+                aux=1;
+             }
+        }
+
+    if(aux==0){
+         printf("\nERRO 03 - Cliente N\xC6o Cadastrado!\n\n");
+            printf("Deseja Cadastrar Cliente? S/N: ");
+            op = getche();
+                if(op ==  'S' || op == 's'){
+                    return c_clientes();
+                }
+                else{
+                    return main();
+                }
+            }
+       printf("\n\nDeseja Fazer Nova Pesquisa? S/N: ");
+       op = getche();
+            if(op ==  'S' || op == 's'){
+                    return busca_c();
+                }
+                else{
+                    return main();
+                }
+        }
+        fclose(arq);
+}
+int busca_f(){
+    char op;
+    int aux=0;
+
+    cad_f f;
+
+    FILE *arq;
+     arq = fopen("dbf.dat","r");
+     if(arq == NULL){
+        printf("Erro 01 - Erro ao abrir arquvio!\n\n");getche();
+        return main();
+     }
+
+    else{
+
+        /* FUNÇÃO BUSCAR POR NOME */
+        char F_nome(){
+            char nome_f[100];
+            printf("NOME DO FILME: ");
+            gets(nome_f);
+            rewind(arq);//POSICIONA CURSOR PARA INICIO DO ARQUIVO
+
+        while(fread(&f,sizeof(cad_f),1,arq) == 1){
+             if(!stricmp(f.nome,nome_f)){
+                //fseek(arq,sizeof(cad_f),SEEK_CUR);
+                printf("\nGENERO: %s",f.genero);
+                printf("\nCODIGO: %d",f.codigo);
+                aux=1;
+                }
+            }
+            fclose(arq);
+        }
+
+        /* FUNÇÃO BUSCAR POR CODIGO */
+        int F_codigo(){
+
+            int codigoF;
+
+        printf("CODIGO DO FILME: ");
+        scanf("%d",&codigoF);
+        rewind(arq);//POSICIONA CURSOR PARA INICIO DO ARQUIVO
+
+       while(fread(&f,sizeof(cad_f),1,arq) == 1){
+             if(codigoF == f.codigo){
+                fseek(arq,sizeof(cad_f),SEEK_CUR);
+                printf("\nNOME: %s",f.nome);
+                printf("\nGENERO: %s",f.genero);
+                aux=1;
+                }
+            }
+            fclose(arq);
+        }
+
+        titulo("BUSCA DE FILMES");
+        printf("\t[1]-BUSCAR POR NOME | [2]-BUSCAR POR CODIGO | [0]-MENU PRINCIPAL\n\n\n");
+        op = getch();
+        switch(op){
+            case '1' : F_nome();setbuf(stdin,NULL);break;
+            case '2' : F_codigo();setbuf(stdin,NULL);break;
+            case '0' : fclose(arq);main();break;
+            default : printf("\nEscolha uma op\x87\xC6o!\n");getch(); return busca_f();
+        }
+
+    if(aux==0){
+         printf("\nFilme nao Cadastrado!");
+             }
+       printf("\n\nDeseja Fazer Nova Pesquisa? S/N: ");
+       op = getche();
+            if(op ==  'S' || op == 's'){
+                    return busca_f();
+                }
+        }
+        fclose(arq);
+        return main();
+}
+int v_cpf(int *a){
+    int aux=0;
+    cad_c c;
+    FILE *arq;
+    arq = fopen("dbc.dat","r");
+    rewind(arq);
+        while(fread(&c,sizeof(cad_c),1,arq)==1){
+            if(*a == c.cpf){
+                aux=1;
+                }
+            }
+            fclose(arq);
+            if(aux==0){
+                return *a;
+            }
+            else{
+                *a=-1;
+                printf("\n\nCliente J\xA0 Cadastrado!\n\n");getche();return *a;
+            }
+}
+int g_codigo(int *a){
+    cad_f f;
+    FILE *arq;
+    arq = fopen("dbf.dat","r");
+    *a = rand()%10000;
+    rewind(arq);
+    while(fread(&f,sizeof(cad_f),1,arq)==1){
+            if(*a == f.codigo){
+                *a = rand()%10000;
+            }
+            else{
+               return *a;
+            }
+    }
+    return *a;
+}
+int v_dados_f(int a, int b){
+    if( a == 0 && b == 0){
+        return -1;
+    }
+    else{
+        return 0;
+    }
+}
